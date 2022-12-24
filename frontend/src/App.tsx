@@ -6,7 +6,7 @@ import {
     BsPlayFill,
     BsStopFill,
     BsChevronDown,
-    BsInfoCircle,
+    BsInfoCircle
 } from "react-icons/bs";
 import examples from "./examples";
 import Converter from "ansi-to-html";
@@ -16,12 +16,12 @@ const ansiConverter = new Converter();
 const socket = io(
     process.env.NODE_ENV === "development" ? "ws://localhost:3001" : "",
     {
-        path: "/websocket/",
+        path: "/websocket/"
     }
 );
 
 function App() {
-    const [code, setCode] = useState('println("Hello, world!");');
+    const [code, setCode] = useState("println(\"Hello, world!\");");
     const [output, setOutput] = useState("");
     const [input, setInput] = useState("");
     const [resizing, setResizing] = useState(false);
@@ -126,7 +126,7 @@ function App() {
     useEffect(() => {
         if (monaco) {
             monaco.languages.register({
-                id: "bananascript",
+                id: "bananascript"
             });
             monaco.languages.setMonarchTokensProvider("bananascript", {
                 keywords: [
@@ -139,9 +139,9 @@ function App() {
                     "for",
                     "while",
                     "type",
-                    "iface",
+                    "iface"
                 ],
-                typeKeywords: ["int", "string", "bool"],
+                typeKeywords: ["int", "float", "string", "bool"],
                 constants: ["true", "false", "null", "void"],
                 operators: [
                     "==",
@@ -167,7 +167,7 @@ function App() {
                     ";",
                     ":",
                     "::",
-                    ":=",
+                    ":="
                 ],
                 symbols: /[=><!~?:&|+\-*/^%]+/,
                 tokenizer: {
@@ -179,31 +179,31 @@ function App() {
                                     "@keywords": "keyword",
                                     "@typeKeywords": "type",
                                     "@constants": "constant",
-                                    "@default": "identifier",
-                                },
-                            },
+                                    "@default": "identifier"
+                                }
+                            }
                         ],
                         [/\/\/.+$/, "comment"],
                         [/[;,.]/, "delimiter"],
                         [/"([^"\\]|\\.)*$/, "string.invalid"],
                         [/\/\*/, "comment", "@comment"],
-                        [/\d+/, "number"],
+                        [/\d+(?:\.\d*)?/, "number"],
                         [/"(?:[^"\\]|\\.)*"/, "string"],
                         [
                             /@symbols/,
                             {
                                 cases: {
                                     "@operators": "operator",
-                                    "@default": "",
-                                },
-                            },
-                        ],
+                                    "@default": ""
+                                }
+                            }
+                        ]
                     ],
                     comment: [
                         [/\*\//, "comment", "@pop"],
-                        [/./, "comment"],
-                    ],
-                },
+                        [/./, "comment"]
+                    ]
+                }
             });
         }
     }, [monaco]);
@@ -278,7 +278,7 @@ function App() {
                 className="console-area"
                 ref={consoleRef}
                 dangerouslySetInnerHTML={{
-                    __html: ansiConverter.toHtml(output),
+                    __html: ansiConverter.toHtml(output)
                 }}
             />
             <input
