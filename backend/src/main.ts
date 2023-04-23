@@ -51,7 +51,7 @@ io.on("connect", (socket) => {
 
         try {
             await execAsync(
-                `docker create --rm -m 128m --cpus=0.25 --name ${containerId} -i bananascript:latest ./bananascript --forceColor src.bs`
+                `docker create --rm -m 128m --cpus=0.25 --name ${containerId} -i ghcr.io/pauhull/bananascript:latest ./bananascript --forceColor src.bs`
             );
 
             const fileName = `tmp/${containerId}.bs`;
