@@ -6,22 +6,24 @@ import {
     BsPlayFill,
     BsStopFill,
     BsChevronDown,
-    BsInfoCircle
+    BsInfoCircle,
 } from "react-icons/bs";
 import examples from "./examples";
 import Converter from "ansi-to-html";
+import languageSyntax from "./syntax";
+import { ReactComponent as GithubLogo } from "./github-mark-white.svg";
 
 const ansiConverter = new Converter();
 
 const socket = io(
     process.env.NODE_ENV === "development" ? "ws://localhost:3001" : "",
     {
-        path: "/websocket/"
+        path: "/websocket/",
     }
 );
 
 function App() {
-    const [code, setCode] = useState("println(\"Hello, world!\");");
+    const [code, setCode] = useState('println("Hello, world!");');
     const [output, setOutput] = useState("");
     const [input, setInput] = useState("");
     const [resizing, setResizing] = useState(false);
@@ -126,85 +128,12 @@ function App() {
     useEffect(() => {
         if (monaco) {
             monaco.languages.register({
-                id: "bananascript"
+                id: "bananascript",
             });
-            monaco.languages.setMonarchTokensProvider("bananascript", {
-                keywords: [
-                    "fn",
-                    "return",
-                    "let",
-                    "const",
-                    "if",
-                    "else",
-                    "for",
-                    "while",
-                    "type",
-                    "iface"
-                ],
-                typeKeywords: ["int", "float", "string", "bool"],
-                constants: ["true", "false", "null", "void"],
-                operators: [
-                    "==",
-                    "!=",
-                    "<",
-                    ">",
-                    "<=",
-                    ">=",
-                    "+",
-                    "-",
-                    "/",
-                    "*",
-                    "&&",
-                    "||",
-                    "=",
-                    "?",
-                    "&",
-                    "!",
-                    "++",
-                    "--",
-                    ".",
-                    ",",
-                    ";",
-                    ":",
-                    "::",
-                    ":="
-                ],
-                symbols: /[=><!~?:&|+\-*/^%]+/,
-                tokenizer: {
-                    root: [
-                        [
-                            /@?[a-zA-Z][\w$]*/,
-                            {
-                                cases: {
-                                    "@keywords": "keyword",
-                                    "@typeKeywords": "type",
-                                    "@constants": "constant",
-                                    "@default": "identifier"
-                                }
-                            }
-                        ],
-                        [/\/\/.+$/, "comment"],
-                        [/[;,.]/, "delimiter"],
-                        [/"([^"\\]|\\.)*$/, "string.invalid"],
-                        [/\/\*/, "comment", "@comment"],
-                        [/\d+(?:\.\d*)?/, "number"],
-                        [/"(?:[^"\\]|\\.)*"/, "string"],
-                        [
-                            /@symbols/,
-                            {
-                                cases: {
-                                    "@operators": "operator",
-                                    "@default": ""
-                                }
-                            }
-                        ]
-                    ],
-                    comment: [
-                        [/\*\//, "comment", "@pop"],
-                        [/./, "comment"]
-                    ]
-                }
-            });
+            monaco.languages.setMonarchTokensProvider(
+                "bananascript",
+                languageSyntax
+            );
         }
     }, [monaco]);
 
@@ -234,6 +163,14 @@ function App() {
                         <></>
                     )}
                 </div>
+
+                <a
+                    href="https://github.com/pauhull/bananascript"
+                    target="_blank"
+                    className="github-link"
+                >
+                    <GithubLogo viewBox="0 0 98 96" />
+                </a>
             </div>
 
             <Editor
@@ -267,7 +204,7 @@ function App() {
                         Limits:
                         <ul>
                             <li>128MB Ram</li>
-                            <li>0.25 V-CPU cores</li>
+                            <li>0.25 vCPU cores</li>
                             <li>60s execution time</li>
                         </ul>
                     </div>
@@ -278,7 +215,7 @@ function App() {
                 className="console-area"
                 ref={consoleRef}
                 dangerouslySetInnerHTML={{
-                    __html: ansiConverter.toHtml(output)
+                    __html: ansiConverter.toHtml(output),
                 }}
             />
             <input

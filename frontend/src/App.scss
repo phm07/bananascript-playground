@@ -17,6 +17,7 @@ body {
     flex-flow: column;
     height: 100vh;
     overflow: hidden;
+    justify-items: center;
 
     .title-section {
         h1 {
@@ -66,6 +67,24 @@ body {
                 &:not(&:first-child) {
                     border-top: 1px solid #464646;
                 }
+            }
+        }
+    }
+
+    .github-link {
+        margin-left: auto;
+        align-self: center;
+
+        svg {
+            fill: white;
+            width: 2em;
+            height: 2em;
+            fill: rgba(255, 255, 255, 0.75);
+            transition: fill 250ms;
+            margin-top: 0.25em;
+
+            &:hover {
+                fill: white;
             }
         }
     }
