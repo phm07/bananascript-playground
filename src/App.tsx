@@ -1,13 +1,7 @@
-import io from "socket.io-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.scss";
 import Editor, { useMonaco } from "@monaco-editor/react";
-import {
-    BsPlayFill,
-    BsStopFill,
-    BsChevronDown,
-    BsInfoCircle,
-} from "react-icons/bs";
+import { BsPlayFill, BsChevronDown } from "react-icons/bs";
 import examples from "./examples";
 import Converter from "ansi-to-html";
 import languageSyntax from "./syntax";
@@ -15,88 +9,51 @@ import { ReactComponent as GithubLogo } from "./github-mark-white.svg";
 
 const ansiConverter = new Converter();
 
-const socket = io(
-    process.env.NODE_ENV === "development" ? "ws://localhost:3001" : "",
-    {
-        path: "/websocket/",
-    }
-);
-
 function App() {
     const [code, setCode] = useState('println("Hello, world!");');
     const [output, setOutput] = useState("");
-    const [input, setInput] = useState("");
     const [resizing, setResizing] = useState(false);
     const [height, setHeight] = useState(window.innerHeight / 2);
     const [running, setRunning] = useState(false);
     const [showExamples, setShowExamples] = useState(false);
-    const [connected, setConnected] = useState(false);
+    const [wasmReady, setWasmReady] = useState(false);
 
     const navbarRef = useRef<HTMLDivElement>(null);
     const consoleRef = useRef<HTMLDivElement>(null);
 
-    const start = useCallback(() => {
-        setOutput("Running program...\n\n");
-        socket.emit("run", code);
-    }, [code]);
-
-    const stop = useCallback(() => {
-        socket.emit("stop");
+    useEffect(() => {
+        const go = new Go();
+        WebAssembly.instantiateStreaming(
+            fetch("/bananascript.wasm"),
+            go.importObject
+        ).then((result) => {
+            go.run(result.instance);
+            setWasmReady(true);
+        });
     }, []);
 
-    const submitInput = useCallback(() => {
-        socket.emit("stdin", input);
-        setInput("");
-    }, [input]);
-
-    const appendToConsole = useCallback(
-        (data: string) => {
-            setOutput(
-                (output + data).split("\n").slice(-100).join("\n").slice(-20000)
-            );
-        },
-        [output]
-    );
-
-    useEffect(() => {
-        setInput("");
-    }, [running]);
+    const start = useCallback(() => {
+        setOutput("Running program...\n\n");
+        setRunning(true);
+        // Yield to let React flush the above state updates before blocking the thread
+        setTimeout(() => {
+            const result = bananaRun(code);
+            let out = result.output;
+            if (result.errors.length > 0) {
+                out += result.errors
+                    .map((e) => `[error] line ${e.line}: ${e.message}`)
+                    .join("\n");
+            }
+            setOutput(out.split("\n").slice(-100).join("\n").slice(-20000));
+            setRunning(false);
+        }, 0);
+    }, [code]);
 
     useEffect(() => {
         if (consoleRef.current) {
             consoleRef.current.scrollTo(0, consoleRef.current.scrollHeight);
         }
     }, [output, consoleRef]);
-
-    useEffect(() => {
-        const connectListener = () => {
-            setConnected(true);
-        };
-        const disconnectListener = () => {
-            setConnected(false);
-        };
-        const stdoutListener = (data: string) => {
-            appendToConsole(data);
-        };
-        const runningListener = () => {
-            setRunning(true);
-        };
-        const exitedListener = () => {
-            setRunning(false);
-        };
-        socket.on("connect", connectListener);
-        socket.on("disconnect", disconnectListener);
-        socket.on("stdout", stdoutListener);
-        socket.on("running", runningListener);
-        socket.on("exited", exitedListener);
-        return () => {
-            socket.off("connect", connectListener);
-            socket.off("disconnect", disconnectListener);
-            socket.off("stdout", stdoutListener);
-            socket.off("running", runningListener);
-            socket.off("exited", exitedListener);
-        };
-    });
 
     useEffect(() => {
         const resizeListener = (e: MouseEvent) => {
@@ -174,7 +131,7 @@ function App() {
             </div>
 
             <Editor
-                onChange={(code) => setCode(code ?? "")}
+                onChange={(value) => setCode(value ?? "")}
                 value={code}
                 height={height}
                 defaultLanguage="bananascript"
@@ -189,26 +146,15 @@ function App() {
                     setResizing(true);
                 }}
             />
-            <div className="title-section" ref={navbarRef}>
+            <div className="title-section">
                 <h1>Console</h1>
                 <button
-                    disabled={!connected}
-                    style={{ color: running ? "#ff6666" : "#78ff2c" }}
-                    onClick={running ? stop : start}
+                    disabled={!wasmReady || running}
+                    style={{ color: "#78ff2c" }}
+                    onClick={start}
                 >
-                    {running ? <BsStopFill /> : <BsPlayFill />}
+                    <BsPlayFill />
                 </button>
-                <div className="info">
-                    <BsInfoCircle />
-                    <div className="info-content">
-                        Limits:
-                        <ul>
-                            <li>128MB Ram</li>
-                            <li>0.25 vCPU cores</li>
-                            <li>60s execution time</li>
-                        </ul>
-                    </div>
-                </div>
             </div>
 
             <div
@@ -217,16 +163,6 @@ function App() {
                 dangerouslySetInnerHTML={{
                     __html: ansiConverter.toHtml(output),
                 }}
-            />
-            <input
-                disabled={!running}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => (e.key === "Enter" ? submitInput() : null)}
-                className="console-input"
-                type="text"
-                spellCheck={false}
-                placeholder={"Console input..."}
             />
         </div>
     );

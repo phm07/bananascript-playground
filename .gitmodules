@@ -1,0 +1,3 @@
+[submodule "bananascript"]
+	path = bananascript
+	url = https://github.com/phm07/bananascript.git
